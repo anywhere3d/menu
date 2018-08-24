@@ -1,201 +1,139 @@
-<a id="menu-item-avatars" class="menu-item"><div>Avatars</div></a>
+<!-- menu-item-avatars.html (v1.3) -->
 
+<a id="menu-item-avatars" class="menu-item dialog-holder"><div>Avatars</div></a>
 
 <script>
 
 //  menu-item-avatars.html.
 
-    var dialogTimeout;
     var $avatarCatalog;
     var bodySectionSelector = "#body-section";
     var dialogSpinnerSelector = ".dialog-spinner";
     var avatarMenuItemSelector = "#menu-item-avatars";
 
-//  Define dialog panel holder.
-    $(avatarMenuItemSelector).on("click", function (){
-        clearTimeout(dialogTimeout);
+    $(function(){
 
-    //  Outfit is not avaliable.
-        if ( !localPlayer.outfit ) {
-            var msg = "Outfit not defined.";
-            bootboxErrorAlert(msg);
-            return false;
-        }
+        var dialogTimeout;
+        var target = localPlayer.outfit;
+        var component = "catalog-avatar-items.html";
 
-    //  Restrict dialog panel to close only from (x) button.
-        if ( this.active ) return false; 
+    //  Set dialog panel fetch options.
+        $(avatarMenuItemSelector).data("skip", 0);
+        $(avatarMenuItemSelector).data("limit", 16);
+        $(avatarMenuItemSelector).data("pageIndex", 0);
+        $(avatarMenuItemSelector).data("buttonIndex", 0);
+        $(avatarMenuItemSelector).data("fetchOptions", { 
+            endpoint: "/outfits/find/selectors/options", 
+            collection: "outfits", //  zargodb.
+            selectors:{
+                kind: "outfit",
+                type: "dna",
+                category: "avatar",
+            },
+            options:{
+                skip: 0,
+                limit: 16,
+                sort: {_id: -1 },
+                fields: {  
+                    "kind":1, 
+                    "type":1,
+                    "outfit":1,
+                    "category":1,
+                    "gender":1,
+                    "title":1,
+                    "data":1,
+                    "master_snapshot":1,
+                },
+            },
+        });
+    
+    //  Define dialog panel holder.
+        $(avatarMenuItemSelector).on("click", function (){
+            clearTimeout(dialogTimeout);
+    
 
-        var dialogPanelOpenHandler = () => {
-            // (this == $(avatarMenuItemSelector)[0])
-            debugMode && console.log("dialogTimeout:", dialogTimeout);
+        //  Outfit is not avaliable.
+            if ( !localPlayer.outfit ) {
+                return false;
+            }
+    
+        //  Prevent dialog panel to close only from (x) button.
+            if ( this.active ) return false; 
+    
+            var dialogPanelOpenHandler = () => {
 
-            var spinner = [ 
-                '<div class="dialog-spinner" style="position:absolute;top:0px;width:100%;height:100%;',
-                'background-size:100px; background-position:50% 50%; background-repeat:no-repeat;',
-                'background-image:url(https://i.imgur.com/7qG1W04.gif);"><div>'
-            ].join(" ");
+                var spinner = [ 
+                    '<div class="dialog-spinner" style="position:absolute;top:0px;width:100%;height:100%;',
+                    'background-size:100px; background-position:50% 50%; background-repeat:no-repeat;',
+                    'background-image:url(https://i.imgur.com/7qG1W04.gif);"><div>'
+                ].join(" ");
+    
+                $(bodySectionSelector).append(spinner);
+    
+                return new Promise( (resolve, reject) => {
+    
+                //  Create dialog panel.
+                    resolve( initDialogPanel() );
+    
+                }).then( ( $dialogPanel ) => {
 
-            $(bodySectionSelector).append(spinner);
-
-            return new Promise( (resolve, reject) => {
-            //  Create dialog panel.
-                resolve( initDialogPanel() );
-
-            }).then( ( $dialogPanel ) => {
-
-            //  Define dialog panel holder.
-                $dialogPanel.data("dialog-holder", this);
-
-            //  Define dialog panel target.
-                $dialogPanel.data("target", localPlayer.outfit);
-
-            //  Set dialog panel fetch options.
-                $dialogPanel.data("fetch-options", { 
-                    endpoint: "/outfits/find/selectors/options", 
-                    collection: "outfits", //  zargodb.
-                    selectors:{
-                        kind: "outfit",
-                        type: "dna",
-                        category: "avatar",
-                    },
-                    options:{
-                        skip: 0,
-                        limit: 16,
-                        sort: {_id: -1 },
-                        fields: {  
-                            "kind":1, 
-                            "type":1,
-                            "outfit":1,
-                            "category":1,
-                            "gender":1,
-                            "title":1,
-                            "data":1,
-                            "master_snapshot":1,
-                        },
-                    },
+                    debugMode && console.log("dialog-holder:", this);
+    
+                //  Define dialog panel holder.
+                    $dialogPanel.data("dialog-holder", this);
+    
+                //  Define dialog panel target.
+                    $(this).data("target", localPlayer.outfit);
+    
+                //  Set dialog panel option.
+                    var option = {
+                        width: 500,
+                        minWidth: 500,
+                        maxWidth: 500,
+                        height: 650,
+                        minHeight: 650,
+                        maxHeight: 650,
+                        title: "Avatars Catalog Panel",
+                    };
+    
+                //  Load dialog panel contents.
+                    var component = "catalog-avatar-items.html";
+                    $dialogPanel.loadComponent(component, option);
+    
+                    $avatarCatalog = $dialogPanel;
+                    debugMode && console.log("$avatarCatalog:", $avatarCatalog);
+    
+                }).catch( (err) => {
+                    throw err;
                 });
-
-            //  Set dialog panel option.
-                var option = {
-                    width: 500,
-                    minWidth: 500,
-                    maxWidth: 500,
-                    height: 650,
-                    minHeight: 650,
-                    maxHeight: 650,
-                    title: "Avatars Catalog Panel",
-                };
-
-            //  $dialogPanel.dialog("option", option);
-
-            //  Load dialog panel contents.
-                var component = "catalog-avatar-items.html";
-                $dialogPanel.loadComponent(component, option);
-                debugMode && console.log("$dialogPanel:", $dialogPanel);
-
-                $avatarCatalog = $dialogPanel;
-                countCatalogItems( $avatarCatalog );
-                openCatalogItems( $avatarCatalog );
-
-            }).catch( (err) => {
-                console.error(err);
-            });
-
-        };  
-
-    //  end of dialogPanelOpenHandler.
-
-        if ( !this.active ){
-
-        //  Open dialog panel.
-            dialogTimeout = setTimeout( dialogPanelOpenHandler, 500);
-
-        } else {
-
-        //  Destroy dialog panel.    
-            $avatarCatalog.dialog("close");
-
-        }
-
-        function countCatalogItems( dialogPanel ){
-
-            var fetchOptions = dialogPanel.data("fetch-options");
-
-            var options = {};
-            var selectors = fetchOptions.selectors;
-            var endpoint = "/outfits/count/selectors/options";
     
-            var data = {
-                options:   JSON.stringify( fetchOptions.options ),
-                selectors: JSON.stringify( fetchOptions.selectors ),
-            };
+            };  
     
-            var jqxhr = $.post( endpoint, data, function(data, status, xhr){
-            //  debugMode && console.log("data:", data);
-            }).then( function( data ){
-                return data.count;
-            }).done( function( count ){
-                debugMode && console.log( "count:", count );
-                $("span#count").text(count);
-            }).fail( function( err ){
-                console.error(err);
-            });
-
-        }
-
-        function openCatalogItems( dialogPanel ){
-
-            var fetchOptions = dialogPanel.data("fetch-options");
-
-            var endpoint = fetchOptions.endpoint;
-            var options = fetchOptions.options;
-            var selectors = fetchOptions.selectors;
-            debugMode && console.log( "options:", options );
+        //  end of dialogPanelOpenHandler.
     
-            var data = {
-                options:   JSON.stringify( fetchOptions.options ),
-                selectors: JSON.stringify( fetchOptions.selectors ),
-            };
+            if ( !this.active ){
     
-            debugMode && console.log("find data:", data);
+            //  Open dialog panel.
+                dialogTimeout = setTimeout( dialogPanelOpenHandler, 500);
     
-            var jqxhr = $.post( endpoint, data, function(data, status, xhr){
-                debugMode && console.log("post %s: %s", endpoint, status);
-            }).then( function( data ){
-                debugMode && console.log("data:", data);
-                w3.displayObject( "catalog-avatar-items", data );
-            //  pager initial values.
-                var page_index = parseInt( options.skip / options.limit );
-                $("span#page").text( page_index + 1 );
-                $("span#from").text( options.skip + 1 );
-                $("span#to").text(options.skip + data.success.length);
-                return data.success;
-            });
+            } else {
     
-            jqxhr.done( function( results ){
-                dialogPanel.dialog("open");
-                debugMode && console.log( "results:", results );
-            });
-    
-            jqxhr.fail( function( err ){
-                console.error(err);
-            });
-            
-            jqxhr.always( function(){
-                $(".dialog-spinner").remove();
-            });
-
-        }
-
-    });
-
-//  Alert target error.
-    $(avatarMenuItemSelector).on("click", function (){
-        if ( !!$avatarCatalog && !$avatarCatalog.data("target") ){
-            bootboxErrorAlert("Deny: target not defined.", function(){
+            //  Destroy dialog panel.    
                 $avatarCatalog.dialog("close");
-            });
-        }
+    
+            }
+
+        });
+    
+    //  Alert target debug error.
+        $(avatarMenuItemSelector).on("click", function (){
+            if ( !!$avatarCatalog && !$(this).data("target") ){
+                bootboxBugAlert("Deny: target not defined.", function(){
+                    $avatarCatalog.dialog("close");
+                });
+            }
+        });
+
     });
 
 </script>
