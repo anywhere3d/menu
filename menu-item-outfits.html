@@ -15,7 +15,7 @@
 
         var dialogTimeout;
         var target = localPlayer.outfit;
-        var component = "catalog-outfit-items.html";
+        var component = "dialog-outfit-items.html";
     
     //  Set dialog panel fetch options.
         $(outfitMenuItemSelector).data("skip", 0);
@@ -99,7 +99,7 @@
                 //  $dialogPanel.dialog("option", option);
     
                 //  Load dialog panel contents.
-                    var component = "catalog-outfit-items.html";
+                    var component = "dialog-outfit-items.html";
                     $dialogPanel.loadComponent(component, option);
     
                     $outfitCatalog = $dialogPanel;
